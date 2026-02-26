@@ -23,6 +23,9 @@ export const state = {
   startTime: 0,
   timerInterval: null,
   won: false,
+  paused: false,
+  pauseTime: 0,
+  autoAdvanceTimer: null,
 
   // Effects
   particles: [],
@@ -42,6 +45,9 @@ export const state = {
   // Profile
   currentProfile: null, // 'luella' or 'aden'
   profileData: null,    // the full profile object for current user
+
+  // Car customization
+  car: { color: '#e94560', stripe: 'center', decal: 'none' },
 
   // Canvas (set during init)
   canvas: null,

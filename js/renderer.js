@@ -131,6 +131,117 @@ function drawCountdown() {
   ctx.textBaseline = 'alphabetic';
 }
 
+// --- Car drawing (reusable for game + preview) ---
+
+// Decal options (shared with menu.js)
+export const CAR_DECALS = [
+  { id: 'none', emoji: '' },
+  { id: 'star', emoji: '\u2B50' },
+  { id: 'heart', emoji: '\u2764\uFE0F' },
+  { id: 'lightning', emoji: '\u26A1' },
+  { id: 'fire', emoji: '\uD83D\uDD25' },
+  { id: 'rainbow', emoji: '\uD83C\uDF08' },
+];
+
+export function drawCar(ctx, x, y, S, facing, carConfig) {
+  const cfg = carConfig || {};
+  const carColor = cfg.color || '#e94560';
+  const stripe = cfg.stripe || 'center';
+  const decal = cfg.decal || 'none';
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  const angles = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 };
+  ctx.rotate(angles[facing] || 0);
+
+  // Headlight glow
+  const hlGlow = ctx.createRadialGradient(S * 0.8, 0, 0, S * 0.8, 0, S * 0.7);
+  hlGlow.addColorStop(0, 'rgba(255, 255, 150, 0.25)');
+  hlGlow.addColorStop(1, 'rgba(255, 255, 150, 0)');
+  ctx.fillStyle = hlGlow;
+  ctx.beginPath();
+  ctx.arc(S * 0.8, 0, S * 0.7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Car body
+  ctx.fillStyle = carColor;
+  ctx.beginPath();
+  ctx.moveTo(-S, -S * 0.5);
+  ctx.lineTo(S * 0.5, -S * 0.5);
+  ctx.quadraticCurveTo(S, -S * 0.4, S, 0);
+  ctx.quadraticCurveTo(S, S * 0.4, S * 0.5, S * 0.5);
+  ctx.lineTo(-S, S * 0.5);
+  ctx.quadraticCurveTo(-S * 0.85, 0, -S, -S * 0.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Windshield
+  ctx.fillStyle = '#7ec8e3';
+  ctx.beginPath();
+  ctx.moveTo(S * 0.05, -S * 0.38);
+  ctx.lineTo(S * 0.4, -S * 0.32);
+  ctx.lineTo(S * 0.4, S * 0.32);
+  ctx.lineTo(S * 0.05, S * 0.38);
+  ctx.closePath();
+  ctx.fill();
+
+  // Racing stripe
+  if (stripe !== 'none') {
+    ctx.fillStyle = '#f5c518';
+    if (stripe === 'double') {
+      ctx.fillRect(-S * 0.8, -S * 0.3, S * 1.2, S * 0.08);
+      ctx.fillRect(-S * 0.8, S * 0.22, S * 1.2, S * 0.08);
+    } else {
+      // 'center' (default)
+      ctx.fillRect(-S * 0.8, -S * 0.08, S * 1.2, S * 0.16);
+    }
+  }
+
+  // Decal
+  if (decal && decal !== 'none') {
+    const decalObj = CAR_DECALS.find(d => d.id === decal);
+    if (decalObj && decalObj.emoji) {
+      ctx.font = `${S * 0.4}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(decalObj.emoji, -S * 0.3, 0);
+    }
+  }
+
+  // Wheels
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-S * 0.65, -S * 0.58, S * 0.3, S * 0.12);
+  ctx.fillRect(-S * 0.65, S * 0.46, S * 0.3, S * 0.12);
+  ctx.fillRect(S * 0.3, -S * 0.58, S * 0.3, S * 0.12);
+  ctx.fillRect(S * 0.3, S * 0.46, S * 0.3, S * 0.12);
+
+  // Headlights
+  ctx.fillStyle = '#ffffaa';
+  ctx.beginPath();
+  ctx.arc(S * 0.85, -S * 0.25, S * 0.1, 0, Math.PI * 2);
+  ctx.arc(S * 0.85, S * 0.25, S * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail lights
+  ctx.fillStyle = '#ff3333';
+  ctx.beginPath();
+  ctx.arc(-S * 0.9, -S * 0.3, S * 0.08, 0, Math.PI * 2);
+  ctx.arc(-S * 0.9, S * 0.3, S * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+export function drawCarPreview(canvas, carConfig) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#16213e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const size = canvas.width * 0.35;
+  drawCar(ctx, canvas.width / 2, canvas.height / 2, size, 'right', carConfig);
+}
+
 // --- Main draw ---
 export function draw() {
   const { ctx, canvas, ROWS, COLS, CELL, maze, boostPads, stars, player, playerTrail } = state;
@@ -242,75 +353,7 @@ export function draw() {
   // Player (sports car)
   const ppx = player.x * CELL + CELL / 2;
   const ppy = player.y * CELL + CELL / 2;
-
-  ctx.save();
-  ctx.translate(ppx, ppy);
-
-  const angles = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 };
-  ctx.rotate(angles[player.facing] || 0);
-
-  const S = CELL * 0.42;
-
-  // Car color — per-profile
-  const carColor = (state.profileData && state.profileData.color) || '#e94560';
-
-  // Headlight glow
-  const hlGlow = ctx.createRadialGradient(S * 0.8, 0, 0, S * 0.8, 0, S * 0.7);
-  hlGlow.addColorStop(0, 'rgba(255, 255, 150, 0.25)');
-  hlGlow.addColorStop(1, 'rgba(255, 255, 150, 0)');
-  ctx.fillStyle = hlGlow;
-  ctx.beginPath();
-  ctx.arc(S * 0.8, 0, S * 0.7, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Car body
-  ctx.fillStyle = carColor;
-  ctx.beginPath();
-  ctx.moveTo(-S, -S * 0.5);
-  ctx.lineTo(S * 0.5, -S * 0.5);
-  ctx.quadraticCurveTo(S, -S * 0.4, S, 0);
-  ctx.quadraticCurveTo(S, S * 0.4, S * 0.5, S * 0.5);
-  ctx.lineTo(-S, S * 0.5);
-  ctx.quadraticCurveTo(-S * 0.85, 0, -S, -S * 0.5);
-  ctx.closePath();
-  ctx.fill();
-
-  // Windshield
-  ctx.fillStyle = '#7ec8e3';
-  ctx.beginPath();
-  ctx.moveTo(S * 0.05, -S * 0.38);
-  ctx.lineTo(S * 0.4, -S * 0.32);
-  ctx.lineTo(S * 0.4, S * 0.32);
-  ctx.lineTo(S * 0.05, S * 0.38);
-  ctx.closePath();
-  ctx.fill();
-
-  // Racing stripe
-  ctx.fillStyle = '#f5c518';
-  ctx.fillRect(-S * 0.8, -S * 0.08, S * 1.2, S * 0.16);
-
-  // Wheels
-  ctx.fillStyle = '#222';
-  ctx.fillRect(-S * 0.65, -S * 0.58, S * 0.3, S * 0.12);
-  ctx.fillRect(-S * 0.65, S * 0.46, S * 0.3, S * 0.12);
-  ctx.fillRect(S * 0.3, -S * 0.58, S * 0.3, S * 0.12);
-  ctx.fillRect(S * 0.3, S * 0.46, S * 0.3, S * 0.12);
-
-  // Headlights
-  ctx.fillStyle = '#ffffaa';
-  ctx.beginPath();
-  ctx.arc(S * 0.85, -S * 0.25, S * 0.1, 0, Math.PI * 2);
-  ctx.arc(S * 0.85, S * 0.25, S * 0.1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Tail lights
-  ctx.fillStyle = '#ff3333';
-  ctx.beginPath();
-  ctx.arc(-S * 0.9, -S * 0.3, S * 0.08, 0, Math.PI * 2);
-  ctx.arc(-S * 0.9, S * 0.3, S * 0.08, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
+  drawCar(ctx, ppx, ppy, CELL * 0.42, player.facing, state.car);
 
   drawParticles();
   drawFloatingTexts();

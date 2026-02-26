@@ -11,6 +11,7 @@ const DEFAULT_PROFILES = {
     color: '#e94560',
     bestTimes: {},
     totalStars: 0,
+    car: { color: '#e94560', stripe: 'center', decal: 'none' },
   },
   aden: {
     name: 'Aden',
@@ -18,6 +19,7 @@ const DEFAULT_PROFILES = {
     color: '#00b4ff',
     bestTimes: {},
     totalStars: 0,
+    car: { color: '#00b4ff', stripe: 'center', decal: 'none' },
   },
 };
 
@@ -38,12 +40,28 @@ export function saveAllProfiles(data) {
 export function loadProfile(key) {
   const profiles = loadAllProfiles();
   const profile = profiles[key] || DEFAULT_PROFILES[key];
+  // Migrate old saves that don't have car config
+  if (!profile.car) {
+    profile.car = { color: profile.color, stripe: 'center', decal: 'none' };
+  }
   state.currentProfile = key;
   state.profileData = profile;
   state.bestTimes = profile.bestTimes || {};
+  state.car = { ...profile.car };
   state.starCount = 0; // reset session star count (totalStars is cumulative)
   state.level = 1;
   return profile;
+}
+
+export function saveCarChoice(carConfig) {
+  if (!state.currentProfile) return;
+  const profiles = loadAllProfiles();
+  const p = profiles[state.currentProfile];
+  if (!p) return;
+  p.car = { ...carConfig };
+  state.car = { ...carConfig };
+  state.profileData.car = { ...carConfig };
+  saveAllProfiles(profiles);
 }
 
 export function saveBestTime(level, elapsed) {

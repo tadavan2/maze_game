@@ -48,7 +48,8 @@ function winLevel() {
 
   msgEl.textContent = `Level ${state.level} complete in ${elapsed}s!`;
 
-  setTimeout(() => {
+  state.autoAdvanceTimer = setTimeout(() => {
+    state.autoAdvanceTimer = null;
     state.level++;
     levelEl.textContent = state.level;
     startLevel();
@@ -75,7 +76,12 @@ function runCountdown(callback) {
 
 export function startLevel() {
   state.won = false;
+  state.paused = false;
   state.checkeredFlag = false;
+  if (state.autoAdvanceTimer) {
+    clearTimeout(state.autoAdvanceTimer);
+    state.autoAdvanceTimer = null;
+  }
   updateGridSize();
   state.player = { x: 0, y: 0, facing: 'right' };
   state.exit = { x: state.COLS - 1, y: state.ROWS - 1 };

@@ -19,7 +19,7 @@ export function setWinCallback(fn) {
 }
 
 export function movePlayer(dir) {
-  if (state.won || state.countdown >= 0) return;
+  if (state.won || state.paused || state.countdown >= 0) return;
 
   const { player, CELL } = state;
   player.facing = dir;

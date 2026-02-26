@@ -4,6 +4,7 @@
 import { state } from './state.js';
 import { movePlayer } from './player.js';
 import { ensureAudio } from './sound.js';
+import { openMenu } from './menu.js';
 
 const MOVE_INITIAL_DELAY = 150;
 const MOVE_REPEAT_RATE = 90;
@@ -50,6 +51,12 @@ export function stopMoveRepeat() {
 
 export function initKeyboard() {
   document.addEventListener('keydown', (e) => {
+    // Escape opens pause menu (desktop shortcut)
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (!state.paused && !state.won) openMenu();
+      return;
+    }
     const dir = keyToDir(e.key);
     if (!dir) return;
     e.preventDefault();

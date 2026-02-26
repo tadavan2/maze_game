@@ -40,21 +40,77 @@
         &middot; Best: <span id="best">--</span>
       </div>
       <span id="profile-name"></span>
-      <button id="switch-profile">Switch</button>
     </div>
 
     <canvas id="game" width="540" height="540"></canvas>
     <div id="message"></div>
     <div id="instructions">Use arrow keys or WASD to drive. Hold to go faster! Hit orange boost pads for TURBO!</div>
 
-    <!-- D-Pad (hidden on non-touch devices) -->
-    <div id="dpad-container" class="hidden">
-      <button class="dpad-btn dpad-up" data-dir="up">&#x25B2;</button>
-      <button class="dpad-btn dpad-left" data-dir="left">&#x25C0;</button>
-      <div class="dpad-center">&#x25CF;</div>
-      <button class="dpad-btn dpad-right" data-dir="right">&#x25B6;</button>
-      <button class="dpad-btn dpad-down" data-dir="down">&#x25BC;</button>
+    <!-- Bottom controls: pause button + D-Pad -->
+    <div id="bottom-controls">
+      <button id="menu-btn" aria-label="Menu">&#x23F8;&#xFE0F;</button>
+      <div id="dpad-container" class="hidden">
+        <button class="dpad-btn dpad-up" data-dir="up">&#x25B2;</button>
+        <button class="dpad-btn dpad-left" data-dir="left">&#x25C0;</button>
+        <div class="dpad-center">&#x25CF;</div>
+        <button class="dpad-btn dpad-right" data-dir="right">&#x25B6;</button>
+        <button class="dpad-btn dpad-down" data-dir="down">&#x25BC;</button>
+      </div>
     </div>
+  </div>
+
+  <!-- Home Screen (lobby after profile pick) -->
+  <div id="home-screen" class="overlay hidden">
+    <span id="home-emoji" class="home-emoji"></span>
+    <h2 id="home-name" class="home-name"></h2>
+    <div class="menu-buttons">
+      <button class="menu-btn home-primary" id="home-play">&#x1F3C1; Start Racing</button>
+      <button class="menu-btn" id="home-levels">&#x1F3AF; Pick Level</button>
+      <button class="menu-btn" id="home-car">&#x1F3CE;&#xFE0F; Pick Car</button>
+      <button class="menu-btn" id="home-scoreboard">&#x1F3C6; Best Times</button>
+      <button class="menu-btn" id="home-switch">&#x1F464; Switch Player</button>
+    </div>
+  </div>
+
+  <!-- Pause Menu Overlay -->
+  <div id="menu-screen" class="overlay hidden">
+    <h2>&#x23F8;&#xFE0F; Paused</h2>
+    <div class="menu-buttons">
+      <button class="menu-btn" id="menu-resume">&#x25B6;&#xFE0F; Resume</button>
+      <button class="menu-btn" id="menu-restart">&#x1F504; Restart Level</button>
+      <button class="menu-btn" id="menu-levels">&#x1F3C1; Pick Level</button>
+      <button class="menu-btn" id="menu-scoreboard">&#x1F3C6; Best Times</button>
+      <button class="menu-btn" id="menu-car">&#x1F3CE;&#xFE0F; Pick Car</button>
+      <button class="menu-btn" id="menu-switch">&#x1F464; Switch Player</button>
+    </div>
+  </div>
+
+  <!-- Level Select Overlay -->
+  <div id="level-screen" class="overlay hidden">
+    <h2>&#x1F3C1; Pick a Level</h2>
+    <div class="level-grid" id="level-grid"></div>
+    <button class="menu-btn menu-back" id="level-back">&#x2B05;&#xFE0F; Back</button>
+  </div>
+
+  <!-- Scoreboard Overlay -->
+  <div id="scoreboard-screen" class="overlay hidden">
+    <h2>&#x1F3C6; Best Times</h2>
+    <div id="scoreboard-list"></div>
+    <div id="scoreboard-summary"></div>
+    <button class="menu-btn menu-back" id="scoreboard-back">&#x2B05;&#xFE0F; Back</button>
+  </div>
+
+  <!-- Car Picker Overlay -->
+  <div id="car-screen" class="overlay hidden">
+    <h2>&#x1F3CE;&#xFE0F; Pick Your Car</h2>
+    <canvas id="car-preview" width="160" height="160"></canvas>
+    <p class="picker-label">Color</p>
+    <div class="color-swatches" id="color-swatches"></div>
+    <p class="picker-label">Stripe</p>
+    <div class="stripe-options" id="stripe-options"></div>
+    <p class="picker-label">Decal</p>
+    <div class="decal-options" id="decal-options"></div>
+    <button class="menu-btn menu-done" id="car-done">&#x2705; Done</button>
   </div>
 
   <script type="module" src="js/main.js"></script>

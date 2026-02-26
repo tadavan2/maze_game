@@ -2,10 +2,11 @@
 
 import { state } from './state.js';
 import { draw, updateParticles, updateFloatingTexts } from './renderer.js';
-import { initKeyboard, stopMoveRepeat } from './input.js';
+import { initKeyboard } from './input.js';
 import { createDpad, isTouchDevice } from './dpad.js';
 import { initUI, startLevel } from './levels.js';
 import { showProfileScreen } from './profiles.js';
+import { initMenu, showHomeScreen } from './menu.js';
 
 let gameRunning = false;
 
@@ -40,11 +41,12 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// --- Start/restart game for a profile ---
-function startGame() {
-  state.canvas = document.getElementById('game');
-  state.ctx = state.canvas.getContext('2d');
-
+// --- Ensure game engine is ready (canvas, loop, input) ---
+function ensureGameReady() {
+  if (!state.canvas) {
+    state.canvas = document.getElementById('game');
+    state.ctx = state.canvas.getContext('2d');
+  }
   resizeCanvas();
   initUI();
 
@@ -52,6 +54,11 @@ function startGame() {
     initKeyboard();
     createDpad();
   }
+}
+
+// --- Launch into a level (called from home screen or after profile switch) ---
+function launchGame() {
+  ensureGameReady();
 
   document.getElementById('stars').textContent = state.starCount;
   document.getElementById('level').textContent = state.level;
@@ -67,26 +74,23 @@ function startGame() {
 
 // --- Init ---
 function init() {
-  showProfileScreen((profileKey) => {
-    startGame();
-  });
-
-  // Switch profile button
-  document.getElementById('switch-profile').addEventListener('click', () => {
-    // Stop current game
-    clearInterval(state.timerInterval);
-    clearInterval(state.countdownTimer);
-    stopMoveRepeat();
-    state.won = true; // prevent movement
-    state.countdown = -1;
-
-    showProfileScreen((profileKey) => {
-      state.won = false;
+  // Wire up the menu system (only once)
+  initMenu(
+    // startGameCallback — called when "Start Racing" or "Pick Level" from home
+    launchGame,
+    // onProfileSwitch — called when "Switch Player" from pause menu picks new profile
+    () => {
       resizeCanvas();
       document.getElementById('stars').textContent = state.starCount;
       document.getElementById('level').textContent = state.level;
       startLevel();
-    });
+    }
+  );
+
+  // Show profile picker → then home screen (not game directly)
+  showProfileScreen((profileKey) => {
+    ensureGameReady();
+    showHomeScreen();
   });
 }
 
