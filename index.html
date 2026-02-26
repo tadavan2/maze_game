@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>Maze Racer!</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Profile Selection Screen -->
+  <div id="profile-screen">
+    <h1>Maze Racer!</h1>
+    <p class="subtitle">Who's playing?</p>
+    <div class="profile-cards">
+      <button class="profile-card" data-profile="luella">
+        <span class="profile-emoji">&#x1F984;</span>
+        <span class="profile-name">Luella</span>
+        <span class="profile-stats">New racer!</span>
+      </button>
+      <button class="profile-card" data-profile="aden">
+        <span class="profile-emoji">&#x1F996;</span>
+        <span class="profile-name">Aden</span>
+        <span class="profile-stats">New racer!</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Game Container (hidden until profile is picked) -->
+  <div id="game-container" class="hidden">
+    <div id="header">
+      <h1>Maze Racer!</h1>
+      <div id="stats">
+        Lv: <span id="level">1</span>
+        &middot; Stars: <span id="stars">0</span>
+        &middot; Time: <span id="timer">0s</span>
+        &middot; Best: <span id="best">--</span>
+      </div>
+      <span id="profile-name"></span>
+      <button id="switch-profile">Switch</button>
+    </div>
+
+    <canvas id="game" width="540" height="540"></canvas>
+    <div id="message"></div>
+    <div id="instructions">Use arrow keys or WASD to drive. Hold to go faster! Hit orange boost pads for TURBO!</div>
+
+    <!-- D-Pad (hidden on non-touch devices) -->
+    <div id="dpad-container" class="hidden">
+      <button class="dpad-btn dpad-up" data-dir="up">&#x25B2;</button>
+      <button class="dpad-btn dpad-left" data-dir="left">&#x25C0;</button>
+      <div class="dpad-center">&#x25CF;</div>
+      <button class="dpad-btn dpad-right" data-dir="right">&#x25B6;</button>
+      <button class="dpad-btn dpad-down" data-dir="down">&#x25BC;</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
