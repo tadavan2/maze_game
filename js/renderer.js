@@ -1,6 +1,7 @@
 // renderer.js — All canvas drawing: maze, car, effects, overlays.
 
 import { state } from './state.js';
+import { MODES } from './modes.js';
 
 // --- Particles ---
 export function spawnParticles(px, py, color, count) {
@@ -17,13 +18,15 @@ export function spawnParticles(px, py, color, count) {
 }
 
 export function updateParticles() {
-  for (let i = state.particles.length - 1; i >= 0; i--) {
+  let write = 0;
+  for (let i = 0; i < state.particles.length; i++) {
     const p = state.particles[i];
     p.x += p.vx;
     p.y += p.vy;
     p.life -= 0.02;
-    if (p.life <= 0) state.particles.splice(i, 1);
+    if (p.life > 0) state.particles[write++] = p;
   }
+  state.particles.length = write;
 }
 
 // --- Floating text ---
@@ -32,12 +35,14 @@ export function spawnFloatingText(x, y, text, color) {
 }
 
 export function updateFloatingTexts() {
-  for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
+  let write = 0;
+  for (let i = 0; i < state.floatingTexts.length; i++) {
     const ft = state.floatingTexts[i];
     ft.y += ft.vy;
     ft.life -= 0.02;
-    if (ft.life <= 0) state.floatingTexts.splice(i, 1);
+    if (ft.life > 0) state.floatingTexts[write++] = ft;
   }
+  state.floatingTexts.length = write;
 }
 
 // --- Internal draw helpers ---
@@ -54,11 +59,11 @@ function drawParticles() {
 }
 
 function drawFloatingTexts() {
-  const { ctx, canvas } = state;
+  const { ctx, canvasCssSize: size } = state;
   state.floatingTexts.forEach(ft => {
     ctx.globalAlpha = ft.life;
     ctx.fillStyle = ft.color;
-    ctx.font = `bold ${canvas.width * 0.03 + (1 - ft.life) * 10}px 'Segoe UI', sans-serif`;
+    ctx.font = `bold ${size * 0.03 + (1 - ft.life) * 10}px 'Segoe UI', sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText(ft.text, ft.x, ft.y);
   });
@@ -67,17 +72,17 @@ function drawFloatingTexts() {
 
 function drawCheckeredFlag() {
   if (!state.checkeredFlag) return;
-  const { ctx, canvas } = state;
+  const { ctx, canvasCssSize: size } = state;
   const elapsed = (Date.now() - state.checkeredFlagTime) / 1000;
   if (elapsed > 2.5) { state.checkeredFlag = false; return; }
 
   const alpha = elapsed < 0.3 ? elapsed / 0.3 : elapsed > 2 ? (2.5 - elapsed) / 0.5 : 1;
   ctx.globalAlpha = alpha * 0.85;
 
-  const flagW = canvas.width * 0.6;
-  const flagH = canvas.height * 0.35;
-  const fx = (canvas.width - flagW) / 2;
-  const fy = (canvas.height - flagH) / 2 - 20;
+  const flagW = size * 0.6;
+  const flagH = size * 0.35;
+  const fx = (size - flagW) / 2;
+  const fy = (size - flagH) / 2 - 20;
   const squareSize = flagW / 10;
 
   for (let row = 0; row < Math.ceil(flagH / squareSize); row++) {
@@ -90,48 +95,60 @@ function drawCheckeredFlag() {
 
   ctx.globalAlpha = alpha;
   ctx.fillStyle = '#f5c518';
-  const fontSize = canvas.width * 0.078;
+  const fontSize = size * 0.078;
   ctx.font = `bold ${fontSize}px "Segoe UI", sans-serif`;
   ctx.textAlign = 'center';
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 4;
-  ctx.strokeText('FINISH!', canvas.width / 2, fy + flagH + 45);
-  ctx.fillText('FINISH!', canvas.width / 2, fy + flagH + 45);
+  ctx.strokeText('FINISH!', size / 2, fy + flagH + 45);
+  ctx.fillText('FINISH!', size / 2, fy + flagH + 45);
   ctx.globalAlpha = 1;
 }
 
 function drawCountdown() {
   if (state.countdown < 0) return;
-  const { ctx, canvas } = state;
+  const { ctx, canvasCssSize: size } = state;
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, size, size);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   if (state.countdown > 0) {
-    const scale = 1 + Math.sin(Date.now() / 100) * 0.1;
+    const scale = 1 + Math.sin(state.now / 100) * 0.1;
     ctx.fillStyle = state.countdown === 1 ? '#e94560' : '#f5c518';
-    const fontSize = canvas.width * 0.148 * scale;
+    const fontSize = size * 0.148 * scale;
     ctx.font = `bold ${fontSize}px "Segoe UI", sans-serif`;
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 5;
-    ctx.strokeText(state.countdown, canvas.width / 2, canvas.height / 2);
-    ctx.fillText(state.countdown, canvas.width / 2, canvas.height / 2);
+    ctx.strokeText(state.countdown, size / 2, size / 2);
+    ctx.fillText(state.countdown, size / 2, size / 2);
   } else {
     ctx.fillStyle = '#00ff64';
-    const fontSize = canvas.width * 0.167;
+    const fontSize = size * 0.167;
     ctx.font = `bold ${fontSize}px "Segoe UI", sans-serif`;
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 5;
-    ctx.strokeText('GO!', canvas.width / 2, canvas.height / 2);
-    ctx.fillText('GO!', canvas.width / 2, canvas.height / 2);
+    ctx.strokeText('GO!', size / 2, size / 2);
+    ctx.fillText('GO!', size / 2, size / 2);
   }
   ctx.textBaseline = 'alphabetic';
 }
 
 // --- Car drawing (reusable for game + preview) ---
+
+// Car color options (shared with menu.js + profiles.js)
+export const CAR_COLORS = [
+  { id: 'red', hex: '#e94560', name: 'Red' },
+  { id: 'blue', hex: '#00b4ff', name: 'Blue' },
+  { id: 'green', hex: '#00ff64', name: 'Green' },
+  { id: 'purple', hex: '#b44dff', name: 'Purple' },
+  { id: 'orange', hex: '#ff8c00', name: 'Orange' },
+  { id: 'pink', hex: '#ff69b4', name: 'Pink' },
+  { id: 'gold', hex: '#f5c518', name: 'Gold' },
+  { id: 'cyan', hex: '#00e5ff', name: 'Cyan' },
+];
 
 // Decal options (shared with menu.js)
 export const CAR_DECALS = [
@@ -242,18 +259,193 @@ export function drawCarPreview(canvas, carConfig) {
   drawCar(ctx, canvas.width / 2, canvas.height / 2, size, 'right', carConfig);
 }
 
+// --- Hazard drawing ---
+
+function drawOilSlicks() {
+  if (!state.challengeMode || !state.oilSlicks.length) return;
+  const { ctx, CELL } = state;
+  state.oilSlicks.forEach(o => {
+    const oilCycle = ((Date.now() - o.activeAt) % 3000);
+    const isActive = oilCycle < 1500; // 1.5s on, 1.5s off
+
+    const ox = o.x * CELL + CELL / 2;
+    const oy = o.y * CELL + CELL / 2;
+    const r = CELL * 0.35;
+
+    if (isActive) {
+      // Dangerous — full dark puddle with rainbow sheen
+      const grad = ctx.createRadialGradient(ox, oy, 0, ox, oy, r);
+      grad.addColorStop(0, 'rgba(30, 30, 30, 0.7)');
+      grad.addColorStop(0.7, 'rgba(40, 40, 50, 0.5)');
+      grad.addColorStop(1, 'rgba(60, 60, 80, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(ox, oy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rainbow sheen
+      const hue = (state.now / 20) % 360;
+      ctx.strokeStyle = `hsla(${hue}, 80%, 60%, 0.4)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ox, oy, r * 0.7, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // Safe — faint outline only, so you know where it is
+      ctx.strokeStyle = 'rgba(100, 100, 120, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ox, oy, r * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+}
+
+function drawTrafficCones() {
+  if (!state.challengeMode || !state.trafficCones.length) return;
+  const { ctx, CELL } = state;
+  state.trafficCones.forEach(c => {
+    if (c.hit) return;
+    const cx = c.x * CELL + CELL / 2;
+    const cy = c.y * CELL + CELL / 2;
+    const wobble = Math.sin(state.now / 300 + c.x * 7) * 0.05;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(wobble);
+    // Cone body
+    ctx.fillStyle = '#ff6600';
+    ctx.beginPath();
+    ctx.moveTo(0, -CELL * 0.3);
+    ctx.lineTo(-CELL * 0.2, CELL * 0.25);
+    ctx.lineTo(CELL * 0.2, CELL * 0.25);
+    ctx.closePath();
+    ctx.fill();
+    // White stripe
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-CELL * 0.12, -CELL * 0.05, CELL * 0.24, CELL * 0.08);
+    ctx.restore();
+  });
+}
+
+function drawSpeedTraps() {
+  if (!state.challengeMode || !state.speedTraps.length) return;
+  const { ctx, CELL } = state;
+  state.speedTraps.forEach(t => {
+    const tx = t.x * CELL;
+    const ty = t.y * CELL;
+    const cycleTime = ((Date.now() - t.activeAt) % 4000);
+    const isActive = cycleTime < 2000;
+
+    if (isActive) {
+      const flash = Math.sin(state.now / 100) > 0;
+      ctx.fillStyle = flash
+        ? 'rgba(255, 0, 0, 0.25)'
+        : 'rgba(0, 0, 255, 0.25)';
+      ctx.fillRect(tx + 2, ty + 2, CELL - 4, CELL - 4);
+    } else {
+      // Faint outline when inactive so player can plan
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tx + 4, ty + 4, CELL - 8, CELL - 8);
+    }
+  });
+}
+
+// --- Mode-aware exit (flag for racer, home base for rescue) ---
+function drawExit(ctx, exPx, exPy, CELL) {
+  const mode = MODES[state.currentMode];
+  const cx = exPx + CELL / 2;
+  const cy = exPy + CELL / 2;
+
+  if (mode.exitStyle === 'house') {
+    // Warm glow — brighter when all friends are rescued
+    const ready = state.allRescued;
+    const pulse = 0.3 + Math.sin(state.now / 300) * 0.15;
+    const baseAlpha = ready ? 0.55 + pulse : 0.2 + pulse * 0.5;
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, CELL * 0.9);
+    glow.addColorStop(0, `rgba(255, 214, 120, ${baseAlpha})`);
+    glow.addColorStop(1, 'rgba(255, 214, 120, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, CELL * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Little house drawn from simple shapes so it scales cleanly at any CELL
+    const s = CELL * 0.32;
+    const bodyTop = cy - s * 0.2;
+    ctx.fillStyle = ready ? '#c67a4a' : '#6e4a33';
+    ctx.fillRect(cx - s, bodyTop, s * 2, s * 1.2);
+    // Roof
+    ctx.fillStyle = ready ? '#8c2c2c' : '#4b1d1d';
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 1.15, bodyTop);
+    ctx.lineTo(cx, bodyTop - s);
+    ctx.lineTo(cx + s * 1.15, bodyTop);
+    ctx.closePath();
+    ctx.fill();
+    // Door / window (glows when ready)
+    ctx.fillStyle = ready ? '#ffeb99' : '#2a1f16';
+    ctx.fillRect(cx - s * 0.3, bodyTop + s * 0.4, s * 0.6, s * 0.8);
+    return;
+  }
+
+  // Default: checkered finish
+  const sq = CELL / 4;
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
+      ctx.fillRect(exPx + c * sq, exPy + r * sq, sq, sq);
+    }
+  }
+  const exitGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, CELL * 0.6);
+  exitGlow.addColorStop(0, `rgba(0, 255, 100, ${0.2 + Math.sin(state.now / 300) * 0.15})`);
+  exitGlow.addColorStop(1, 'rgba(0, 255, 100, 0)');
+  ctx.fillStyle = exitGlow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, CELL * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// --- Rescue targets (emoji drawn per cell) ---
+function drawRescues(ctx, CELL) {
+  if (!state.rescues.length) return;
+  const bob = Math.sin(state.now / 300) * CELL * 0.06;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${CELL * 0.7}px sans-serif`;
+  state.rescues.forEach(r => {
+    if (r.collected) return;
+    const rx = r.x * CELL + CELL / 2;
+    const ry = r.y * CELL + CELL / 2 + bob;
+
+    // Soft purple halo so targets pop against the dark maze
+    const halo = ctx.createRadialGradient(rx, ry, 0, rx, ry, CELL * 0.55);
+    halo.addColorStop(0, 'rgba(180, 140, 255, 0.35)');
+    halo.addColorStop(1, 'rgba(180, 140, 255, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(rx, ry, CELL * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.fillText(r.emoji, rx, ry);
+  });
+  ctx.textBaseline = 'alphabetic';
+}
+
 // --- Main draw ---
 export function draw() {
-  const { ctx, canvas, ROWS, COLS, CELL, maze, boostPads, stars, player, playerTrail } = state;
+  const { ctx, canvasCssSize: size, ROWS, COLS, CELL, maze, boostPads, stars, player, playerTrail } = state;
 
   ctx.fillStyle = '#16213e';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, size, size);
 
   // Boost pads
   boostPads.forEach(b => {
     const bpx = b.x * CELL;
     const bpy = b.y * CELL;
-    const pulse = 0.5 + Math.sin(Date.now() / 200) * 0.3;
+    const pulse = 0.5 + Math.sin(state.now / 200) * 0.3;
 
     const glow = ctx.createRadialGradient(bpx + CELL / 2, bpy + CELL / 2, 0, bpx + CELL / 2, bpy + CELL / 2, CELL * 0.6);
     glow.addColorStop(0, `rgba(255, 140, 0, ${pulse * 0.4})`);
@@ -280,42 +472,38 @@ export function draw() {
     ctx.textBaseline = 'alphabetic';
   });
 
-  // Maze walls
+  // Hazards (draw under maze walls)
+  drawOilSlicks();
+  drawTrafficCones();
+  drawSpeedTraps();
+
+  // Maze walls (batched into single path for performance)
   ctx.strokeStyle = '#e94560';
   ctx.lineWidth = 2;
+  ctx.beginPath();
 
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const cell = maze[y][x];
       const px = x * CELL;
       const py = y * CELL;
-      if (cell.top) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + CELL, py); ctx.stroke(); }
-      if (cell.right) { ctx.beginPath(); ctx.moveTo(px + CELL, py); ctx.lineTo(px + CELL, py + CELL); ctx.stroke(); }
-      if (cell.bottom) { ctx.beginPath(); ctx.moveTo(px, py + CELL); ctx.lineTo(px + CELL, py + CELL); ctx.stroke(); }
-      if (cell.left) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + CELL); ctx.stroke(); }
+      if (cell.top) { ctx.moveTo(px, py); ctx.lineTo(px + CELL, py); }
+      if (cell.right) { ctx.moveTo(px + CELL, py); ctx.lineTo(px + CELL, py + CELL); }
+      if (cell.bottom) { ctx.moveTo(px, py + CELL); ctx.lineTo(px + CELL, py + CELL); }
+      if (cell.left) { ctx.moveTo(px, py); ctx.lineTo(px, py + CELL); }
     }
   }
 
-  // Exit (checkered finish)
-  const exPx = state.exit.x * CELL;
-  const exPy = state.exit.y * CELL;
-  const sq = CELL / 4;
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
-      ctx.fillRect(exPx + c * sq, exPy + r * sq, sq, sq);
-    }
-  }
-  const exitGlow = ctx.createRadialGradient(exPx + CELL / 2, exPy + CELL / 2, 0, exPx + CELL / 2, exPy + CELL / 2, CELL * 0.6);
-  exitGlow.addColorStop(0, `rgba(0, 255, 100, ${0.2 + Math.sin(Date.now() / 300) * 0.15})`);
-  exitGlow.addColorStop(1, 'rgba(0, 255, 100, 0)');
-  ctx.fillStyle = exitGlow;
-  ctx.beginPath();
-  ctx.arc(exPx + CELL / 2, exPy + CELL / 2, CELL * 0.6, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.stroke();
+
+  // Exit — styled per mode (flag for racer, glowing home base for rescue)
+  drawExit(ctx, state.exit.x * CELL, state.exit.y * CELL, CELL);
+
+  // Rescue targets (Midnight Rescue only)
+  drawRescues(ctx, CELL);
 
   // Stars
-  const time = Date.now() / 1000;
+  const time = state.now / 1000;
   stars.forEach(s => {
     if (s.collected) return;
     const sx = s.x * CELL + CELL / 2;
@@ -353,7 +541,17 @@ export function draw() {
   // Player (sports car)
   const ppx = player.x * CELL + CELL / 2;
   const ppy = player.y * CELL + CELL / 2;
-  drawCar(ctx, ppx, ppy, CELL * 0.42, player.facing, state.car);
+  if (state.spinOutUntil > Date.now()) {
+    // Spin-out animation — rotate car continuously
+    ctx.save();
+    ctx.translate(ppx, ppy);
+    const spinAngle = ((state.now % 300) / 300) * Math.PI * 2;
+    ctx.rotate(spinAngle);
+    drawCar(ctx, 0, 0, CELL * 0.42, 'right', state.car);
+    ctx.restore();
+  } else {
+    drawCar(ctx, ppx, ppy, CELL * 0.42, player.facing, state.car);
+  }
 
   drawParticles();
   drawFloatingTexts();

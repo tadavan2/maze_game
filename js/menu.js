@@ -3,19 +3,25 @@
 import { state } from './state.js';
 import { startLevel } from './levels.js';
 import { stopMoveRepeat } from './input.js';
-import { showProfileScreen, getHighestLevel, saveCarChoice } from './profiles.js';
-import { drawCarPreview, CAR_DECALS } from './renderer.js';
+import { showProfileScreen, getHighestLevel, saveCarChoice, saveChallengeMode } from './profiles.js';
+import { drawCarPreview, CAR_DECALS, CAR_COLORS } from './renderer.js';
+import { MODES } from './modes.js';
 
-const CAR_COLORS = [
-  { id: 'red', hex: '#e94560', name: 'Red' },
-  { id: 'blue', hex: '#00b4ff', name: 'Blue' },
-  { id: 'green', hex: '#00ff64', name: 'Green' },
-  { id: 'purple', hex: '#b44dff', name: 'Purple' },
-  { id: 'orange', hex: '#ff8c00', name: 'Orange' },
-  { id: 'pink', hex: '#ff69b4', name: 'Pink' },
-  { id: 'gold', hex: '#f5c518', name: 'Gold' },
-  { id: 'cyan', hex: '#00e5ff', name: 'Cyan' },
-];
+// Call when the active mode changes. Keeps the HUD label + instruction text
+// in sync so players always see the right objective wording.
+export function applyModeToUI() {
+  const mode = MODES[state.currentMode];
+  const labelEl = document.getElementById('stars-label');
+  if (labelEl) labelEl.textContent = mode.statLabel;
+  const starsEl = document.getElementById('stars');
+  if (starsEl) {
+    starsEl.textContent = mode.showRescues
+      ? `${state.rescuedCount}/${state.rescues.length || 0}`
+      : state.starCount;
+  }
+  const instructionsEl = document.getElementById('instructions');
+  if (instructionsEl) instructionsEl.textContent = mode.instructions;
+}
 
 const CAR_STRIPES = [
   { id: 'center', name: 'Racing' },
@@ -38,6 +44,7 @@ function hideAll() {
   document.getElementById('level-screen').classList.add('hidden');
   document.getElementById('scoreboard-screen').classList.add('hidden');
   document.getElementById('car-screen').classList.add('hidden');
+  document.getElementById('newprofile-screen').classList.add('hidden');
 }
 
 // Return to whichever parent screen we came from
@@ -48,6 +55,25 @@ function goBack() {
   } else {
     document.getElementById('menu-screen').classList.remove('hidden');
   }
+}
+
+// --- Challenge Mode Toggle ---
+
+function updateChallengeModeButtons() {
+  const on = state.challengeMode;
+  const label = on ? '\u2620\uFE0F Danger Mode: ON' : '\uD83D\uDE07 Danger Mode: OFF';
+  const homeBtn = document.getElementById('home-challenge');
+  const menuBtn = document.getElementById('menu-challenge');
+  homeBtn.textContent = label;
+  menuBtn.textContent = label;
+  homeBtn.classList.toggle('danger-on', on);
+  menuBtn.classList.toggle('danger-on', on);
+}
+
+function toggleChallengeMode() {
+  state.challengeMode = !state.challengeMode;
+  saveChallengeMode(state.challengeMode);
+  updateChallengeModeButtons();
 }
 
 // --- Home Screen ---
@@ -68,10 +94,28 @@ export function showHomeScreen() {
   playBtn.style.borderColor = accentColor;
   playBtn.style.background = accentColor + '40';
 
+  updateChallengeModeButtons();
   document.getElementById('home-screen').classList.remove('hidden');
 }
 
 function startFromHome() {
+  startInMode('racer');
+}
+
+function startRescueFromHome() {
+  startInMode('rescue');
+}
+
+function startInMode(modeId) {
+  // Switching modes resets level progression — rescue and racer track their
+  // own best times via mode:level keys, so a fresh start-from-1 is simplest.
+  if (state.currentMode !== modeId) {
+    state.currentMode = modeId;
+    state.level = 1;
+    const levelEl = document.getElementById('level');
+    if (levelEl) levelEl.textContent = state.level;
+  }
+  applyModeToUI();
   hideAll();
   menuContext = 'pause';
   if (onStartGame) onStartGame();
@@ -88,6 +132,12 @@ export function openMenu() {
   if (state.autoAdvanceTimer) {
     clearTimeout(state.autoAdvanceTimer);
     state.autoAdvanceTimer = null;
+  }
+
+  // Stop countdown if it's running (prevents it from ticking in the background)
+  if (state.countdownTimer) {
+    clearInterval(state.countdownTimer);
+    state.countdownTimer = null;
   }
 
   menuContext = 'pause';
@@ -184,10 +234,17 @@ function showScoreboard() {
       const row = document.createElement('div');
       row.className = 'scoreboard-row';
       row.style.borderLeftColor = accentColor;
-      row.innerHTML = `
-        <span class="scoreboard-level">Level ${lv}</span>
-        <span class="scoreboard-time">${bestTimes[lv]}s</span>
-      `;
+
+      const levelSpan = document.createElement('span');
+      levelSpan.className = 'scoreboard-level';
+      levelSpan.textContent = `Level ${lv}`;
+      row.appendChild(levelSpan);
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'scoreboard-time';
+      timeSpan.textContent = `${bestTimes[lv]}s`;
+      row.appendChild(timeSpan);
+
       list.appendChild(row);
     });
   }
@@ -295,6 +352,8 @@ export function initMenu(startGameCallback, onProfileSwitch) {
 
   // Home screen buttons
   document.getElementById('home-play').addEventListener('click', startFromHome);
+  const rescueBtn = document.getElementById('home-rescue');
+  if (rescueBtn) rescueBtn.addEventListener('click', startRescueFromHome);
   document.getElementById('home-levels').addEventListener('click', () => {
     menuContext = 'home';
     showLevelSelect();
@@ -307,6 +366,7 @@ export function initMenu(startGameCallback, onProfileSwitch) {
     menuContext = 'home';
     showScoreboard();
   });
+  document.getElementById('home-challenge').addEventListener('click', toggleChallengeMode);
   document.getElementById('home-switch').addEventListener('click', () => {
     hideAll();
     switchProfile(() => {
@@ -331,6 +391,7 @@ export function initMenu(startGameCallback, onProfileSwitch) {
     menuContext = 'pause';
     showCarPicker();
   });
+  document.getElementById('menu-challenge').addEventListener('click', toggleChallengeMode);
   document.getElementById('menu-switch').addEventListener('click', () => switchProfile(onProfileSwitch));
 
   // Sub-screen back buttons (context-aware)

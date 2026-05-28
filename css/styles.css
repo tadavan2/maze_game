@@ -72,26 +72,75 @@ body {
   color: inherit;
 }
 
+.profile-card {
+  position: relative;
+}
+
 .profile-card:active {
   transform: scale(0.96);
 }
 
-.profile-card[data-profile="luella"] {
-  border-color: rgba(233, 69, 96, 0.3);
+/* "Add Player" card */
+.profile-add {
+  border-style: dashed !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
-.profile-card[data-profile="luella"]:hover,
-.profile-card[data-profile="luella"]:active {
-  border-color: #e94560;
-  box-shadow: 0 0 25px rgba(233, 69, 96, 0.3);
+.profile-add:hover,
+.profile-add:active {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
-.profile-card[data-profile="aden"] {
-  border-color: rgba(0, 180, 255, 0.3);
+/* Edit button on profile cards */
+.profile-edit {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(245, 197, 24, 0.25);
+  border: 1px solid rgba(245, 197, 24, 0.5);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
 }
-.profile-card[data-profile="aden"]:hover,
-.profile-card[data-profile="aden"]:active {
-  border-color: #00b4ff;
-  box-shadow: 0 0 25px rgba(0, 180, 255, 0.3);
+.profile-edit:hover,
+.profile-edit:active {
+  opacity: 1;
+  background: rgba(245, 197, 24, 0.45);
+}
+
+/* Delete button on custom profiles */
+.profile-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 0, 0, 0.3);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+}
+.profile-delete:active {
+  background: rgba(255, 0, 0, 0.6);
 }
 
 .profile-emoji {
@@ -342,6 +391,18 @@ body {
   background: rgba(233, 69, 96, 0.5) !important;
 }
 
+.home-rescue {
+  background: rgba(110, 80, 200, 0.22) !important;
+  border-color: #9c7dff !important;
+  font-size: 1.35rem !important;
+  text-align: center !important;
+  padding: 16px 20px !important;
+}
+
+.home-rescue:active {
+  background: rgba(110, 80, 200, 0.45) !important;
+}
+
 /* ===== Menu Buttons ===== */
 .menu-buttons {
   display: flex;
@@ -534,4 +595,79 @@ body {
 .stripe-btn:active,
 .decal-btn:active {
   transform: scale(0.95);
+}
+
+/* ===== New Profile Screen ===== */
+.newprofile-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.newprofile-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #eee;
+  font-size: 1.3rem;
+  padding: 12px 16px;
+  width: 260px;
+  text-align: center;
+  font-family: inherit;
+  outline: none;
+}
+.newprofile-input:focus {
+  border-color: #f5c518;
+}
+.newprofile-input.error {
+  border-color: #e94560;
+}
+
+.emoji-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 340px;
+}
+
+.emoji-btn {
+  width: 48px;
+  height: 48px;
+  font-size: 1.6rem;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.emoji-btn.selected {
+  border-color: #f5c518;
+  background: rgba(245, 197, 24, 0.15);
+  transform: scale(1.15);
+}
+
+/* ===== Danger Mode Toggle ===== */
+.danger-on {
+  background: rgba(255, 60, 0, 0.25) !important;
+  border-color: #ff3c00 !important;
+  color: #ff6633 !important;
+}
+.danger-on:active {
+  background: rgba(255, 60, 0, 0.4) !important;
+}
+
+.newprofile-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 260px;
+  margin-top: 10px;
 }

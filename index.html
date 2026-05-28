@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Maze Racer">
   <meta name="theme-color" content="#1a1a2e">
   <title>Maze Racer!</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -15,17 +18,24 @@
   <div id="profile-screen">
     <h1>Maze Racer!</h1>
     <p class="subtitle">Who's playing?</p>
-    <div class="profile-cards">
-      <button class="profile-card" data-profile="luella">
-        <span class="profile-emoji">&#x1F984;</span>
-        <span class="profile-name">Luella</span>
-        <span class="profile-stats">New racer!</span>
-      </button>
-      <button class="profile-card" data-profile="aden">
-        <span class="profile-emoji">&#x1F996;</span>
-        <span class="profile-name">Aden</span>
-        <span class="profile-stats">New racer!</span>
-      </button>
+    <div class="profile-cards"></div>
+  </div>
+
+  <!-- New Profile Creation Screen -->
+  <div id="newprofile-screen" class="overlay hidden">
+    <h2 id="newprofile-title">&#x1F3CE;&#xFE0F; New Racer</h2>
+    <div class="newprofile-form">
+      <p class="picker-label">Name</p>
+      <input type="text" id="newprofile-name" class="newprofile-input"
+             maxlength="12" placeholder="Your name..." autocomplete="off">
+      <p class="picker-label">Pick Your Emoji</p>
+      <div class="emoji-grid" id="emoji-grid"></div>
+      <p class="picker-label">Pick Your Color</p>
+      <div class="color-swatches" id="newprofile-colors"></div>
+    </div>
+    <div class="newprofile-buttons">
+      <button class="menu-btn menu-done" id="newprofile-create">&#x2705; Save</button>
+      <button class="menu-btn menu-back" id="newprofile-cancel">&#x2B05;&#xFE0F; Back</button>
     </div>
   </div>
 
@@ -35,7 +45,7 @@
       <h1>Maze Racer!</h1>
       <div id="stats">
         Lv: <span id="level">1</span>
-        &middot; Stars: <span id="stars">0</span>
+        &middot; <span id="stars-label">Stars:</span> <span id="stars">0</span>
         &middot; Time: <span id="timer">0s</span>
         &middot; Best: <span id="best">--</span>
       </div>
@@ -64,10 +74,12 @@
     <span id="home-emoji" class="home-emoji"></span>
     <h2 id="home-name" class="home-name"></h2>
     <div class="menu-buttons">
-      <button class="menu-btn home-primary" id="home-play">&#x1F3C1; Start Racing</button>
+      <button class="menu-btn home-primary" id="home-play">&#x1F3C1; Maze Racer</button>
+      <button class="menu-btn home-rescue" id="home-rescue">&#x1F319; Midnight Rescue</button>
       <button class="menu-btn" id="home-levels">&#x1F3AF; Pick Level</button>
       <button class="menu-btn" id="home-car">&#x1F3CE;&#xFE0F; Pick Car</button>
       <button class="menu-btn" id="home-scoreboard">&#x1F3C6; Best Times</button>
+      <button class="menu-btn" id="home-challenge">&#x1F607; Danger Mode: OFF</button>
       <button class="menu-btn" id="home-switch">&#x1F464; Switch Player</button>
     </div>
   </div>
@@ -81,6 +93,7 @@
       <button class="menu-btn" id="menu-levels">&#x1F3C1; Pick Level</button>
       <button class="menu-btn" id="menu-scoreboard">&#x1F3C6; Best Times</button>
       <button class="menu-btn" id="menu-car">&#x1F3CE;&#xFE0F; Pick Car</button>
+      <button class="menu-btn" id="menu-challenge">&#x1F607; Danger Mode: OFF</button>
       <button class="menu-btn" id="menu-switch">&#x1F464; Switch Player</button>
     </div>
   </div>

@@ -9,6 +9,11 @@ import { openMenu } from './menu.js';
 const MOVE_INITIAL_DELAY = 150;
 const MOVE_REPEAT_RATE = 90;
 
+// Monotonic token incremented on every start/stop. A scheduled repeatMove
+// checks this against its captured value and bails if a newer startMoveRepeat
+// superseded it, so no zombie callback can schedule its own follow-up timer.
+let repeatToken = 0;
+
 function keyToDir(key) {
   switch (key) {
     case 'ArrowUp': case 'w': case 'W': return 'up';
@@ -29,9 +34,11 @@ export function getCurrentDir() {
 
 export function startMoveRepeat(dir) {
   stopMoveRepeat();
+  const myToken = ++repeatToken;
   state.moveRepeatCount = 0;
   movePlayer(dir);
   state.moveRepeatTimer = setTimeout(function repeatMove() {
+    if (myToken !== repeatToken) return; // superseded by a newer start/stop
     const currentDir = getCurrentDir();
     if (!currentDir) { stopMoveRepeat(); return; }
     state.moveRepeatCount++;
@@ -42,6 +49,7 @@ export function startMoveRepeat(dir) {
 }
 
 export function stopMoveRepeat() {
+  repeatToken++;
   if (state.moveRepeatTimer) {
     clearTimeout(state.moveRepeatTimer);
     state.moveRepeatTimer = null;

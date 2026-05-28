@@ -19,6 +19,16 @@ export const state = {
   starCount: 0,
   level: 1,
 
+  // Mode — 'racer' (Maze Racer) or 'rescue' (Midnight Rescue).
+  // Mode-specific gameplay lives in modes.js; most modules just branch on this.
+  currentMode: 'racer',
+
+  // Rescue mode — collectible NPCs the player must pick up before the exit
+  // will complete the level. Empty in racer mode.
+  rescues: [],
+  rescuedCount: 0,
+  allRescued: false,
+
   // Timing
   startTime: 0,
   timerInterval: null,
@@ -49,9 +59,21 @@ export const state = {
   // Car customization
   car: { color: '#e94560', stripe: 'center', decal: 'none' },
 
+  // Challenge mode
+  challengeMode: false,
+  oilSlicks: [],
+  trafficCones: [],
+  speedTraps: [],
+  spinOutUntil: 0,
+
   // Canvas (set during init)
   canvas: null,
   ctx: null,
+  canvasCssSize: 0, // CSS-pixel size of game canvas (drawing uses these units after DPR scale)
+
+  // Monotonic clock captured once per frame by the game loop; used for purely
+  // visual animations so every shape drawn in the same frame sees the same time.
+  now: 0,
 
   // Input state
   keysDown: {},
